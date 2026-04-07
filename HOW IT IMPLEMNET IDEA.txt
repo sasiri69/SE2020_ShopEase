@@ -1,0 +1,118 @@
+UPDATED: E-commerce Platform – ShopEase
+All 6 Members Now Have Image Upload/Handling Responsibilities
+(Fully compliant with SE2020 assignment.txt – pages 1-8)
+Every member’s main entity now includes image upload (or image-related features) as per your request. This mirrors the Hostel example (Room has images, Booking links users/rooms) while keeping strong linkages across modules.
+Core Linkage Flow (All Modules Interconnected):
+Admin creates Product (multiple images) → User browses Products → Adds to Cart (with optional proof image) → Proceeds to Order (links products) → Makes Payment (optional receipt/screenshot image) → Delivery (optional delivery proof image by admin/driver) → User leaves Review (with optional review images) on the delivered Product.
+All use Multer middleware (reusable, with file type/size validation: JPG/PNG < 5MB). Images stored via Cloudinary (recommended for live deployment) or local server folder → URLs saved in MongoDB. React Native uses Expo Image Picker (or react-native-image-crop-picker for multiple selection). Protected routes with JWT + role middleware. No hardcoded data.
+Shared Group – Authentication Module (All test it; one lead can present):
+User registration, login, bcrypt hashing, JWT, role-based access (“user” / “admin”).
+1. Wijegunarathna R S H (IT24101814) – Product Management Component
+Main Entity: Product
+MongoDB Schema (Key Fields):
+JavaScriptimages: [{ type: String }],           // Array of image URLs (multiple)
+name, description, price, category, stockQuantity, createdBy (ref User), averageRating, numReviews
+Backend CRUD (Full):
+
+POST /api/products → Admin only, Multer array upload (multiple images, max 5)
+GET /api/products (all + filters)
+GET /api/products/:id
+PUT /api/products/:id → Admin, optional new images
+DELETE /api/products/:id
+
+Business logic: stock adjustment, rating recalculation.
+Image Responsibilities: Full multiple image upload pipeline (Multer + Cloudinary). Validate file types/sizes. Return array of URLs.
+Mobile UI (React Native):
+Admin Add/Edit Product screen: multiple image picker (preview grid), form validation (Yup), image carousel in Product Detail. Functional components, hooks, Axios, React Navigation.
+Linkages: Images displayed everywhere (Cart, Order, Review). Stock reduced on Order.
+Viva Focus: Multiple image upload logic, controller, validation, integration.
+
+2. Gunarathnam C V (IT24100950) – Cart Management Component (CRUD + Proof Image Upload)
+Main Entity: Cart
+MongoDB Schema:
+JavaScriptproofImage: { type: String },   // Single optional proof image URL
+items: [{ productId (ref), quantity, priceAtTime }], totalAmount, userId (ref)
+Backend CRUD (Full):
+
+POST /api/cart/add
+GET /api/cart
+PUT /api/cart/update
+DELETE /api/cart/remove or clear
+
+Image Responsibilities: Multer single file upload for proofImage (e.g., custom request photo or payment slip). File validation middleware (reusable).
+Mobile UI: Cart screen with quantity controls, proof image picker + preview, real-time total, "Proceed to Checkout".
+Linkages: On checkout → copies items to Order, clears cart. References Product images.
+Viva Focus: Proof image handling, cart-to-order flow.
+3. Lekamge N Y M (IT24100760) – Order Management Component
+Main Entity: Order
+MongoDB Schema:
+JavaScript// No direct image field, but links to entities that have images
+items: [{ productId (ref), quantity, priceAtTime }], totalAmount, status, paymentId (ref), deliveryId (ref), userId (ref)
+Backend CRUD (Full + Status Management):
+
+POST /api/orders (create from Cart + check stock)
+GET /api/orders (user history)
+GET /api/orders/:id
+PUT /api/orders/:id/status (Admin)
+DELETE /api/orders/:id (cancel if Pending)
+
+Image Responsibilities: Order detail screen displays Product images from referenced Products + Payment receipt image (if uploaded) + Delivery proof image (once available). API endpoint to fetch aggregated images.
+Mobile UI: Order history list (with product thumbnails), detailed Order screen showing all linked images, status tracker.
+Linkages: Created from Cart, triggers Payment → Delivery. Stock updated. Enables Review only after Delivered.
+Viva Focus: Order creation logic, status flow, image aggregation from linked entities.
+4. Janith K H M (IT24101680) – Payment Management Component
+Main Entity: Payment
+MongoDB Schema:
+JavaScriptreceiptImage: { type: String },   // Optional uploaded receipt/screenshot
+orderId (ref), userId (ref), amount, paymentMethod, transactionId, status
+Backend CRUD (Full):
+
+POST /api/payments (create on checkout)
+GET /api/payments/:orderId
+PUT /api/payments/:id/verify (update status)
+
+Image Responsibilities: Multer single upload for receiptImage (e.g., bank transfer proof).
+Mobile UI: Payment selection screen + image picker for receipt (if not Cash on Delivery), success screen showing uploaded image.
+Linkages: Successful Payment → creates/updates Delivery. Links to Order (which shows Product images).
+Viva Focus: Payment image upload + status integration with Order/Delivery.
+5. Kirtharan M (IT24101277) – Delivery Management Component
+Main Entity: Delivery
+MongoDB Schema:
+JavaScriptproofImage: { type: String },   // Delivery completion proof photo (uploaded by admin/driver)
+orderId (ref), address, trackingNumber, status, estimated/actual dates
+Backend CRUD (Full + Status):
+
+POST /api/deliveries (auto after Payment)
+GET /api/deliveries
+PUT /api/deliveries/:id/status + upload proofImage
+GET /api/deliveries/:id
+
+Image Responsibilities: Multer single upload for proofImage when status → Delivered.
+Mobile UI: Delivery tracking screen (status updates + image preview when delivered), history list.
+Linkages: On “Delivered” → updates Order status → unlocks Review. Displays Product images from Order.
+Viva Focus: Delivery proof image pipeline + status triggers.
+6. Sansiri P S T (IT24100687) – Review and Rating Component
+Main Entity: Review
+MongoDB Schema:
+JavaScriptimages: [{ type: String }],   // Optional multiple review photos
+productId (ref), userId (ref), orderId (ref), rating (1-5), comment
+Backend CRUD (Full):
+
+POST /api/reviews (only if Order status = Delivered – middleware check)
+GET /api/reviews/product/:productId
+GET /api/reviews/user
+DELETE /api/reviews/:id (own review)
+
+Image Responsibilities: Multer array upload (multiple review images, max 3). Updates Product averageRating/numReviews.
+Mobile UI: Review form (star rating + multiple image picker) accessible only on Delivered orders. Product detail shows reviews with images.
+Linkages: Only after Delivery complete. Updates Product (including its images display).
+Viva Focus: Review image upload + post-delivery protection logic.
+Technical Notes for All Members (for README.txt & Documentation):
+
+Backend: Proper folder structure (routes/, controllers/, models/, middleware/, uploads/). Error handling, status codes, validation.
+Image Handling: Consistent Multer config (fileFilter for jpg/png, size limit). Cloudinary integration recommended for deployment.
+Frontend: Expo Image Picker (or multiple image picker library) + image preview grids/carousels. Clean UI, form validation, no hardcoded data.
+All APIs protected. Live demo uses deployed backend only.
+
+This updated version ensures EVERY member has a clear image upload or image handling component while maintaining full CRUD, linkages, and assignment requirements (including Member 6 style deployment + image responsibilities).
+It perfectly matches the Hostel example structure (primary entity with images + linked booking-like flows).
